@@ -55,5 +55,27 @@ two_way_table <- function(var1, var2){
   return(df)
 }
 
-#test oneway static function
+#test twoway static function
 two_way_table(alldata$job, alldata$marital)
+
+#Numerical Summaries
+# Function to calculate grouped summaries
+summaries <- function(data, group_var, num_var) {
+ df <- data %>%
+    group_by({{ group_var }}) %>%
+    summarise(
+      Count  = n(),
+      Mean   = mean({{ num_var }}, na.rm = TRUE),
+      Median = median({{ num_var }}, na.rm = TRUE),
+      SD     = sd({{ num_var }}, na.rm = TRUE),
+      Min    = min({{ num_var }}, na.rm = TRUE),
+      Max    = max({{ num_var }}, na.rm = TRUE),
+      .groups = "drop"
+    )
+ 
+ return(df)
+}
+
+#test Summary Function
+test_summary <- summaries(alldata, marital, age)
+test_summary
