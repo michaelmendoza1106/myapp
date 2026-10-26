@@ -79,3 +79,90 @@ summaries <- function(data, group_var, num_var) {
 #test Summary Function
 test_summary <- summaries(alldata, marital, age)
 test_summary
+
+# bar static function
+# Define the function
+barplot <- function(data, x_var, group_var) {
+  ggplot(data, aes(x = {{ x_var }}, fill = {{ group_var }})) +
+    geom_bar(position = "dodge") + 
+    theme_minimal() +
+    labs(
+      x = deparse(substitute(x_var)),
+      y = "Count",
+      fill = deparse(substitute(group_var))
+    )
+}
+
+#test fucntion
+barplot(alldata, job, loan)
+
+# side by side static function
+# Define the function
+side_by_side <- function(data, x_var, y_var, group_var) {
+  ggplot(data, aes(x = {{ x_var }}, y = {{ y_var }}, fill = {{ group_var }})) +
+    geom_col(position = "dodge") + 
+    theme_minimal() +
+    labs(
+      x = deparse(substitute(x_var)),
+      y = deparse(substitute(y_var)),
+      fill = deparse(substitute(group_var))
+    )
+}
+
+#test function
+side_by_side(alldata, job, balance, loan)
+
+#histogram function
+group_histogram <- function(dataset, x_var, y_var = NULL, group_var) {
+  
+  # Base plot mapping the X variable and the fill/grouping variable
+  p <- ggplot(dataset, aes(x = {{ x_var }}, fill = factor({{ group_var }})))
+  
+  # Check if a custom Y variable/weight is provided
+  if (is.null(substitute(y_var))) {
+    # Standard frequency count histogram
+    p <- p + geom_histogram(position = "identity", alpha = 0.6, color = "white")
+  } else {
+    # If a Y variable is explicitly given, map it to the y aesthetic or as a weight
+    p <- p + geom_histogram(aes(y = {{ y_var }}), stat = "identity", position = "dodge")
+  }
+  
+  # Clean up formatting and labels
+  p <- p + 
+    theme_minimal() +
+    labs(fill = "Group")
+  
+  return(p)
+}
+
+# Test Histogram
+group_histogram(alldata, balance, group_var = loan)
+group_histogram(alldata, balance, duration, group_var = loan)
+
+#create scatter plot output
+boxplot <- function(data, x, y, fill = NULL) {
+  
+  # Initialize the base plot with standard aesthetics
+  p <- ggplot(data, aes(x = {{ x }}, y = {{ y }}))
+  
+  # Check if a multivariate fill variable was provided
+  if (!missing(fill)) {
+    p <- p + geom_boxplot(aes(fill = {{ fill }}), outlier.alpha = 0.6)
+  } else {
+    # Default single-grouping boxplot with a clean default color
+    p <- p + geom_boxplot(fill = "blue", outlier.alpha = 0.6)
+  }
+  
+  # Apply a clean theme and layout adjustments
+  p <- p + 
+    theme_minimal(base_size = 14) +
+    theme(
+      panel.grid.major.x = element_blank(),
+      legend.position = "top"
+    )
+  
+  return(p)
+}
+
+#test the function
+boxplot(alldata, age, job, education)
