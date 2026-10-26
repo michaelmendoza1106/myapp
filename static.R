@@ -58,7 +58,7 @@ two_way_table <- function(var1, var2){
 #test twoway static function
 two_way_table(alldata$job, alldata$marital)
 
-#Numerical Summaries
+#Numerical Summaries 
 # Function to calculate grouped summaries
 summaries <- function(data, group_var, num_var) {
  df <- data %>%
