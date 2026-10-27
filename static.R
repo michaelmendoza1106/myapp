@@ -82,12 +82,12 @@ test_summary
 
 # bar static function
 # Define the function
-barplot <- function(data, x_var, group_var) {
-  ggplot(data, aes(x = {{ x_var }}, fill = {{ group_var }})) +
+barplot <- function(data, x, group_var) {
+  ggplot(data, aes(x = {{ x }}, fill = {{ group_var }})) +
     geom_bar(position = "dodge") + 
     theme_minimal() +
     labs(
-      x = deparse(substitute(x_var)),
+      x = deparse(substitute(x)),
       y = "Count",
       fill = deparse(substitute(group_var))
     )
@@ -98,13 +98,13 @@ barplot(alldata, job, loan)
 
 # side by side static function
 # Define the function
-side_by_side <- function(data, x_var, y_var, group_var) {
-  ggplot(data, aes(x = {{ x_var }}, y = {{ y_var }}, fill = {{ group_var }})) +
+side_by_side <- function(data, x, y, group_var) {
+  ggplot(data, aes(x = {{ x }}, y = {{ y }}, fill = {{ group_var }})) +
     geom_col(position = "dodge") + 
     theme_minimal() +
     labs(
-      x = deparse(substitute(x_var)),
-      y = deparse(substitute(y_var)),
+      x = deparse(substitute(x)),
+      y = deparse(substitute(y)),
       fill = deparse(substitute(group_var))
     )
 }
@@ -113,18 +113,18 @@ side_by_side <- function(data, x_var, y_var, group_var) {
 side_by_side(alldata, job, balance, loan)
 
 #histogram function
-group_histogram <- function(dataset, x_var, y_var = NULL, group_var) {
+group_histogram <- function(data, x, y = NULL, group_var) {
   
   # Base plot mapping the X variable and the fill/grouping variable
-  p <- ggplot(dataset, aes(x = {{ x_var }}, fill = factor({{ group_var }})))
+  p <- ggplot(data, aes(x = {{ x }}, fill = factor({{ group_var }})))
   
   # Check if a custom Y variable/weight is provided
-  if (is.null(substitute(y_var))) {
+  if (is.null(substitute(y))) {
     # Standard frequency count histogram
     p <- p + geom_histogram(position = "identity", alpha = 0.6, color = "white")
   } else {
     # If a Y variable is explicitly given, map it to the y aesthetic or as a weight
-    p <- p + geom_histogram(aes(y = {{ y_var }}), stat = "identity", position = "dodge")
+    p <- p + geom_histogram(aes(y = {{ y }}), stat = "identity", position = "dodge")
   }
   
   # Clean up formatting and labels
@@ -166,3 +166,20 @@ boxplot <- function(data, x, y, fill = NULL) {
 
 #test the function
 boxplot(alldata, age, job, education)
+
+#scatter plot static function
+scatter_plot <- function(data, x, y, group_var) {
+  ggplot(data, aes_string(x = deparse(substitute(x)), y = deparse(substitute(y)), color = deparse(substitute(group_var)), shape = deparse(substitute(group_var)))) +
+    geom_point(size = 3, alpha = 0.8) +
+    labs(
+      x = deparse(substitute(x)),
+      y = deparse(substitute(y)),
+      color = deparse(substitute(group_var)),
+      shape = deparse(substitute(group_var)),
+      title = paste("Scatter Plot of", deparse(substitute(y)), "vs", deparse(substitute(x)), "by", deparse(substitute(group_var)))
+    ) +
+    theme_minimal()
+}
+
+#test function
+scatter_plot(alldata, age, balance, default)
