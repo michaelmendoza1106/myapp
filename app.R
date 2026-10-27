@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyalert)
 library(tidyverse)
+library(bslib) 
 
 source("helpers.R")
 
@@ -8,205 +9,154 @@ source("helpers.R")
 ui <- fluidPage(
   
   # Title
-  "Correlation Exploration",
+  "Exploration of Banking Data",
   
   # Side panel with Widgets
   sidebarLayout(
     sidebarPanel(
       
       # Select X/Y Axis
-      h2("Select Variables to Find Correlation:"),
-        selectizeInput(inputId = 'corr_x', 
-                       label = 'x Variable', 
-                       choices = numeric_vars, 
-                       selected = 'PINCP'), 
-        selectizeInput(inputId = 'corr_y',
-                       label = 'y Variable',
-                       choices = numeric_vars,
-                       selected = 'JWMNP'),
+      h2("Select Variables to Investigate:"),
+      selectizeInput(inputId = 'x', 
+                     label = 'x Variable', 
+                     choices = numeric_vars, 
+                     selected = 'age'),
+      uiOutput("dynamic_slider_x"),
+      
+      selectizeInput(inputId = 'y',
+                     label = 'y Variable',
+                     choices = numeric_vars,
+                     selected = 'balance'),
+      uiOutput("dynamic_slider_y"),
+      
       # Radio Buttons will go here
       br(),
       h2("Choose a subset of the data:"),
-        radioButtons("hhl_corr",
-                     "Household Language",
-                     choiceNames = c("All","English Only","Spanish","Other"),
-                     choiceValues = c("all","english","spanish","other"),
-                     selected = "all"),
-        radioButtons("fs_corr",
-                     "SNAP Recipient",
-                     choiceNames = c("All","Yes","No"),
-                     choiceValues = c("all","yes","no"),
-                     selected = "all"),
-        radioButtons("schl_corr",
-                     "Educational Attainment",
-                     choiceNames = c("All","High School not completed","High School or GED","College Degree"),
-                     choiceValues = c("all","no_hs","hs","college"),
-                     selected = "all"),
+      radioButtons("rel_corr",
+                   "Marital Status",
+                   choiceNames = c("All","Divorced","Married","Single"),
+                   choiceValues = c("all","divorced","married","single"),
+                   selected = "all"),
+      radioButtons("schl_corr",
+                   "Educational Attainment",
+                   choiceNames = c("All","High School not completed","High School or GED","College Degree"),
+                   choiceValues = c("all","high school not completed","high school or ged","college degree"),
+                   selected = "all"),
       br(),
-      h2("Select a Sample Size"),
-        sliderInput("corr_n",
-                    label=NULL,
-                    min=20,
-                    max=500,
-                    value=20,
-                    step=1),
-      actionButton("corr_sample","Get a Sample!")
+      h2("Select Age-Range"),
+      sliderInput(
+        inputId = "age_range",
+        label = "Select Age Range:",
+        min = 0,
+        max = 100,
+        value = c(18, 65), # Sets the initial min and max handles
+        step = 1
+      ),
+      actionButton("corr_sample","Subset and Submit")
     ),
     
     # main Panel
     mainPanel(
-      plotOutput("corr_scatterplot"),
-      conditionalPanel("input.corr_sample", #only show if a sample has been taken
-                       h2("Guess the correlation!"),
-                       column(6, 
-                              numericInput("corr_guess",
-                                           "",
-                                           value = 0,
-                                           min = -1, 
-                                           max = 1
-                              )
-                       ),
-                       column(6, 
-                              actionButton("corr_submit", "Check Your Guess!"))
-      )
+      h3("Reactive Outputs"),
+      textOutput("selected_range"),
+      textOutput("min_age"),
+      textOutput("max_age"),
+      
+      plotOutput("corr_scatterplot")
     )
   )
 )
 
-my_sample <- readRDS("my_sample_temp.rds")
+my_sample <- readRDS("combined.bankdata.rds")
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output, session) {
-
+  
+  # Reactive X Numeric Slider UI
+  output$dynamic_slider_x <- renderUI({
+    req(input$x)
     
-    #################################################
-    ##Correlation tab
-    #This code makes sure the select boxes update so they can't select the same variable in both!
-    #first, update the 'y' selections available
-    observeEvent(input$corr_x, {
-      corr_x <- input$corr_x
-      corr_y <- input$corr_y
-      choices <- numeric_vars
-      if (corr_x != corr_y){
-        choices <- choices[-which(choices == corr_x)]
-        updateSelectizeInput(session,
-                             "corr_y",
-                             choices = choices,
-                             selected = corr_y)
-      }
-    })
-    #now, update the 'x' selections available
-    observeEvent(input$corr_y, {
-      corr_x <- input$corr_x
-      corr_y <- input$corr_y
-      choices <- numeric_vars
-      if (corr_x != corr_y){
-        choices <- choices[-which(choices == corr_y)]
-        updateSelectizeInput(session,
-                             "corr_x",
-                             choices = choices,
-                             selected = corr_x)
-      }
-    })
+    var_data <- my_sample[[input$x]]
+    min_val <- min(var_data, na.rm = TRUE)
+    max_val <- max(var_data, na.rm = TRUE)
     
-
-
-
-    #Create a reactiveValues() object called sample_corr
-    sample_corr = reactiveValues(corr_data=NULL,corr_truth=NULL)
-    observeEvent(input$corr_sample,{
-      if(input$hhl_corr == "all"){
-        hhl_sub <- HHLvals
-      } else if(input$hhl_corr == "english"){
-        hhl_sub <- HHLvals["1"]
-      } else if(input$hhl_corr == "spanish"){
-        hhl_sub <- HHLvals["2"]
-      } else {
-        hhl_sub <- HHLvals[c("0", "3", "4", "5")]
-      }
-      
-      if(input$fs_corr == "all"){
-        fs_sub <- FSvals
-      } else if(input$fs_corr == "yes"){
-        fs_sub <- FSvals["1"]
-      } else {
-        fs_sub <- FSvals["2"]
-      }
-      
-      if(input$schl_corr == "all"){
-        schl_sub <- SCHLvals
-      } else if(input$schl_corr == "no_hs"){
-        schl_sub <- SCHLvals[c("0", "01", "02", "03", "04",
-                               "05", "06", "07", "08", "09",
-                               "10", "11", "12", "13", "14", "15")]
-      } else if(input$schl_corr == "hs"){
-        schl_sub <- SCHLvals[as.character(16:19)]
-      } else {
-        schl_sub <- SCHLvals[as.character(20:24)]
-      }
-      
-      corr_vars <- c(input$corr_x, input$corr_y)
-      
-      subsetted_data <- my_sample |>
-        filter(#cat vars first
-          HHLfac %in% hhl_sub,
-          FSfac %in% fs_sub,
-          SCHLfac %in% schl_sub
-        ) %>% #make sure numeric variables are in appropriate range, must use %>% here for {} to work
-        {if("WKHP" %in% corr_vars) filter(., WKHP > 0) else .} %>%
-        {if("VALP" %in% corr_vars) filter(., !is.na(VALP)) else .} %>%
-        {if("TAXAMT" %in% corr_vars) filter(., !is.na(TAXAMT)) else .} %>%
-        {if("GRPIP" %in% corr_vars) filter(., GRPIP > 0) else .} %>%
-        {if("GASP" %in% corr_vars) filter(., GASP > 0) else .} %>%
-        {if("ELEP" %in% corr_vars) filter(., ELEP > 0) else .} %>%
-        {if("WATP" %in% corr_vars) filter(., WATP > 0) else .} %>%
-        {if("PINCP" %in% corr_vars) filter(., AGEP > 18) else .} %>%
-        {if("JWMNP" %in% corr_vars) filter(., !is.na(JWMNP)) else .}
-      
-      index <- sample(1:nrow(subsetted_data),
-                      size = input$corr_n,
-                      replace = TRUE,
-                      prob = subsetted_data$PWGTP/sum(subsetted_data$PWGTP))
-      
-      sample_corr$corr_data <- subsetted_data[index, ]
-      
-      sample_corr$corr_truth <- cor(
-        sample_corr$corr_data |> select(all_of(corr_vars))
-      )[1,2]
-    })
-
-    # Correlation Scatter Plot
-    output$corr_scatterplot = renderPlot({
-      validate(
-        need(!is.null(sample_corr$corr_data), "Please select your variables, subset, and click the 'Get a Sample!' button.")
-      )
-      ggplot(sample_corr$corr_data, aes_string(x = isolate(input$corr_x), y = isolate(input$corr_y))) +
-      geom_point()
-    })
-
-
-    #This code does the correlation guessing game! Nothign to change here
-    observeEvent(input$corr_submit, {
-      close <- abs(input$corr_guess - sample_corr$corr_truth) <= .05
-      if(close){
-        shinyalert(title = "Nicely done!",
-                   paste0("The sample correlation is ", 
-                          round(sample_corr$corr_truth, 4), 
-                          "."),
-                   type = "success"
-        )
-      } else {
-        if(input$corr_guess > sample_corr$corr_truth){
-          shinyalert(title = "Try again!",
-                     "Try guessing a lower value.")
-        } else {
-          shinyalert(title = "Try again!",
-                     "Try guessing a higher value.")
-        }
-      }
-    })
+    sliderInput(
+      inputId = "range_filter_x",
+      label = paste("Filter by", input$x, "range:"),
+      min = min_val,
+      max = max_val,
+      value = c(min_val, max_val)
+    )
+  })
+  
+  # Reactive Y Numeric Slider UI
+  output$dynamic_slider_y <- renderUI({
+    req(input$y)
     
+    var_data <- my_sample[[input$y]]
+    min_val <- min(var_data, na.rm = TRUE)
+    max_val <- max(var_data, na.rm = TRUE)
     
+    sliderInput(
+      inputId = "range_filter_y",
+      label = paste("Filter by", input$y, "range:"),
+      min = min_val,
+      max = max_val,
+      value = c(min_val, max_val)
+    )
+  })
+  
+  # Unified Reactive data chain tied to the Action Button submission
+  filtered_data <- eventReactive(input$corr_sample, {
+    req(input$x, input$y)
+    
+    df <- my_sample
+    
+    # Apply X bounds if available
+    if (!is.null(input$range_filter_x)) {
+      df <- df[df[[input$x]] >= input$range_filter_x[1] & df[[input$x]] <= input$range_filter_x[2], ]
+    }
+    
+    # Apply Y bounds if available
+    if (!is.null(input$range_filter_y)) {
+      df <- df[df[[input$y]] >= input$range_filter_y[1] & df[[input$y]] <= input$range_filter_y[2], ]
+    }
+    
+    # Apply age range bounds
+    if (!is.null(input$age_range)) {
+      df <- df[df$age >= input$age_range[1] & df$age <= input$age_range[2], ]
+    }
+    
+    # Apply Marital Status filter
+    if (input$rel_corr != "all") {
+      df <- df[df$marital == input$rel_corr, ]
+    }
+    
+    # Apply Education filter
+    if (input$schl_corr != "all") {
+      df <- df[df$education == input$schl_corr, ]
+    }
+    
+    return(df)
+  }, ignoreNULL = FALSE) # ignoreNULL = FALSE ensures data loads immediately on startup
+  
+  # Text outputs placeholder logic
+  output$selected_range <- renderText({
+    req(input$age_range)
+    paste("Selected age range:", input$age_range[1], "to", input$age_range[2])
+  })
+  
+  output$min_age <- renderText({ paste("Min Age:", input$age_range[1]) })
+  output$max_age <- renderText({ paste("Max Age:", input$age_range[2]) })
+  
+  # Example scatterplot execution using the submitted filters
+  output$corr_scatterplot <- renderPlot({
+    req(input$x, input$y)
+    ggplot(filtered_data(), aes_string(x = input$x, y = input$y)) +
+      geom_point(alpha = 0.5, color = "steelblue") +
+      theme_minimal() +
+      labs(title = paste("Scatterplot of", input$x, "vs", input$y))
+  })
 }
 
 # Run the application 

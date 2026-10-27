@@ -84,15 +84,9 @@ variable_info <- c(
   "ADJINC" = "Adjustment factor for income" #don't think I need this for 2022 data
 )
 
-numeric_vars <- c("Travel time to work" = "JWMNP",
-  "Total person's income" = "PINCP",
-  "Water cost" = "WATP",
-  "Electricity cost" = "ELEP",
-  "Gas cost" = "GASP",
-  "Gross rent as a percentage of income" = "GRPIP",
-  "Property taxes" = "TAXAMT",
-  "Property value" = "VALP",
-  "Usual hours worked per week" = "WKHP")
+numeric_vars <- c("Age of Client" = "age",
+  "Average Yearly Balance, in Euros" = "balance",
+  "Contact Duration" ="duration")
 
 POWSPvals <- c(
   "036"= "New York/NY",
