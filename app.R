@@ -344,7 +344,10 @@ server <- function(input, output, session) {
                  # Numeric Side by Side Chart
                  br(),
                  h5("Side-by-Side Numeric Column Chart"),
-                 plotOutput("numeric_side_by_side_plot")
+                 plotOutput("numeric_side_by_side_plot"),
+                 br(),
+                 h5("Boxplot Column Chart"),
+                 plotOutput("box_plot")
           )
         )
       )
@@ -375,12 +378,10 @@ server <- function(input, output, session) {
                  ),
           ),
           column(width = 8, 
-                 h5("Grouped Descriptive Statistics"),
-                 tableOutput("numeric_summary_table"),
-                 # Numeric Side by Side Chart
-                 br(),
-                 h5("Side-by-Side Numeric Column Chart"),
-                 plotOutput("numeric_side_by_side_plot")
+                 #Scatter plot
+                 h5("Scatter Plot of Selected Variables"),
+                 plotOutput("numeric_scatter_plot"),
+                 br()
           )
         )
       )
@@ -392,6 +393,15 @@ server <- function(input, output, session) {
   output$categorical_summary_table <- renderTable({
     req(filtered_data(), input$cat_mode, input$selected_cat_var1)
     df <- filtered_data()
+    
+    #add loading delay
+    withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+      
+      # Inject the 1-second structural execution delay
+      Sys.sleep(1)
+      
+      # Complete progress block right before drawing
+      setProgress(value = 1, message = "Plot complete!")
     
     # Validation safety checks
     req(input$selected_cat_var1 %in% names(df))
@@ -406,6 +416,7 @@ server <- function(input, output, session) {
       # Execute your two_way_table function
       two_way_table(df[[input$selected_cat_var1]], df[[input$selected_cat_var2]])
     }
+    })
   })
   
   #One way Bar plot
@@ -415,6 +426,15 @@ server <- function(input, output, session) {
     
     req(input$selected_cat_var1 %in% names(df))
     
+    #add loading delay
+    withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+      
+      # Inject the 1-second structural execution delay
+      Sys.sleep(1)
+      
+      # Complete progress block right before drawing
+      setProgress(value = 1, message = "Plot complete!")
+    
     barplot(
       data = df,
       x = .data[[input$selected_cat_var1]],
@@ -422,13 +442,24 @@ server <- function(input, output, session) {
       x_label = input$selected_cat_var1,
       fill_label = input$selected_cat_var1
     )
+    })
   })
+  
   #Two way Bar plot
   output$categorical_bar_plot2 <- renderPlot({
     req(filtered_data(), input$cat_mode == "two_way", input$selected_cat_var1, input$selected_cat_var2)
     df <- filtered_data()
     
     req(input$selected_cat_var1 %in% names(df), input$selected_cat_var2 %in% names(df))
+    
+    #add loading delay
+    withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+      
+      # Inject the 1-second structural execution delay
+      Sys.sleep(1)
+      
+      # Complete progress block right before drawing
+      setProgress(value = 1, message = "Plot complete!")
     
     barplot(
       data = df,
@@ -437,24 +468,34 @@ server <- function(input, output, session) {
       x_label = input$selected_cat_var1,
       fill_label = input$selected_cat_var2
     )
+    })
   })
   
-  
-  # Numeric summary statistics
+  # Grouped summary statistics
   output$numeric_summary_table <- renderTable({
     req(filtered_data(), input$num_group_var, input$num_target_var1)
     df <- filtered_data()
     
     req(input$num_group_var %in% names(df), input$num_target_var1 %in% names(df))
     
+    #add loading delay
+    withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+      
+      # Inject the 1-second structural execution delay
+      Sys.sleep(1)
+      
+      # Complete progress block right before drawing
+      setProgress(value = 1, message = "Plot complete!")
+    
     summaries(
       data = df, 
       group_var = .data[[input$num_group_var]], 
       num_var = .data[[input$num_target_var1]]
     )
+    })
   })
     
-  # Numeric side-by-side
+  # Grouped histogram
     output$numeric_side_by_side_plot <- renderPlot({
       req(filtered_data(), input$num_group_var, input$num_fill_var, input$num_target_var1)
       df <- filtered_data()
@@ -465,17 +506,61 @@ server <- function(input, output, session) {
         input$num_fill_var %in% names(df), 
         input$num_target_var1 %in% names(df)
       )
+      
+      #add loading delay
+      withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+        
+        # Inject the 1-second structural execution delay
+        Sys.sleep(1)
+        
+        # Complete progress block right before drawing
+        setProgress(value = 1, message = "Plot complete!")
 
-      side_by_side(
+      histogram(
         data = df,
-        x = .data[[input$num_group_var]],
-        y = .data[[input$num_target_var1]],
+        y = .data[[input$num_group_var]],
+        x = .data[[input$num_target_var1]],
         group_var = .data[[input$num_fill_var]],
-        x_label = input$num_group_var,
-        y_label = input$num_target_var1,
+        y_label = input$num_group_var,
+        x_label = input$num_target_var1,
         group_label = input$num_fill_var
       )
+      })
     })
+    
+    # Grouped Boxplot
+    output$box_plot <- renderPlot({
+      req(filtered_data(), input$num_group_var, input$num_fill_var, input$num_target_var1)
+      df <- filtered_data()
+      
+      # Validation safety check
+      req(
+        input$num_group_var %in% names(df), 
+        input$num_fill_var %in% names(df), 
+        input$num_target_var1 %in% names(df)
+      )
+      
+      #add loading delay
+      withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+        
+        # Inject the 1-second structural execution delay
+        Sys.sleep(1)
+        
+        # Complete progress block right before drawing
+        setProgress(value = 1, message = "Plot complete!")
+      
+      boxplot(
+        data = df,
+        y = .data[[input$num_group_var]],
+        x = .data[[input$num_target_var1]],
+        fill = .data[[input$num_fill_var]]
+      )
+    })
+  })
+    
+    
+    
+    
 }
 
 # Run the application 

@@ -99,7 +99,7 @@ barplot <- function(data, x, group_var, x_label, fill_label) {
 
 # side by side static function
 # Define the function
-side_by_side <- function(data, x, y, group_var, x_label, y_label, group_label) {
+histogram <- function(data, x, y, group_var, x_label, y_label, group_label) {
   ggplot(data, aes(x = {{ x }}, y = {{ y }}, fill = {{ group_var }})) +
     geom_col(position = "dodge") + 
     theme_minimal() +
@@ -113,37 +113,12 @@ side_by_side <- function(data, x, y, group_var, x_label, y_label, group_label) {
 #test function
 #side_by_side(alldata, job, balance, loan)
 
-#histogram function
-group_histogram <- function(data, x, group_var) {
-  
-  # Base plot mapping the X variable and the fill/grouping variable
-  p <- ggplot(data, aes(x = {{ x }}, fill = factor({{ group_var }}))) + 
-    geom_histogram(position = "identity", alpha = 0.6, color = "white") + 
-      theme_minimal() +
-    labs(fill = "Group" )
-  
-  return(p)
-}
-
-# Test Histogram
-group_histogram(alldata, balance, group_var = loan)
-
 #create scatter plot output
-boxplot <- function(data, x, y, fill = NULL) {
+boxplot <- function(data, x, y, fill ) {
   
   # Initialize the base plot with standard aesthetics
-  p <- ggplot(data, aes(x = {{ x }}, y = {{ y }}))
-  
-  # Check if a multivariate fill variable was provided
-  if (!missing(fill)) {
-    p <- p + geom_boxplot(aes(fill = {{ fill }}), outlier.alpha = 0.6)
-  } else {
-    # Default single-grouping boxplot with a clean default color
-    p <- p + geom_boxplot(fill = "blue", outlier.alpha = 0.6)
-  }
-  
-  # Apply a clean theme and layout adjustments
-  p <- p + 
+  p <- ggplot(data, aes(x = {{ x }}, y = {{ y }})) + 
+    geom_boxplot(aes(fill = {{ fill }}), outlier.alpha = 0.6) + 
     theme_minimal(base_size = 14) +
     theme(
       panel.grid.major.x = element_blank(),
