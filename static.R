@@ -41,7 +41,7 @@ one_way_table <- function(var){
 }
 
 #test oneway static function
-one_way_table(alldata$job)
+#one_way_table(alldata$job)
 
 # Two Way
 two_way_table <- function(var1, var2){
@@ -57,7 +57,7 @@ two_way_table <- function(var1, var2){
 }
 
 #test twoway static function
-two_way_table(alldata$job, alldata$marital)
+#two_way_table(alldata$job, alldata$marital)
 
 #Numerical Summaries 
 # Function to calculate grouped summaries
@@ -78,8 +78,8 @@ summaries <- function(data, group_var, num_var) {
 }
 
 #test Summary Function
-test_summary <- summaries(alldata, marital, age)
-test_summary
+#test_summary <- summaries(alldata, marital, age)
+#test_summary
 
 # bar static function
 # Define the function
@@ -95,7 +95,7 @@ barplot <- function(data, x, group_var) {
 }
 
 #test fucntion
-barplot(alldata, job, loan)
+#barplot(alldata, job, loan)
 
 # side by side static function
 # Define the function
@@ -111,7 +111,7 @@ side_by_side <- function(data, x, y, group_var) {
 }
 
 #test function
-side_by_side(alldata, job, balance, loan)
+# side_by_side(alldata, job, balance, loan)
 
 #histogram function
 group_histogram <- function(data, x, y = NULL, group_var) {
@@ -137,8 +137,8 @@ group_histogram <- function(data, x, y = NULL, group_var) {
 }
 
 # Test Histogram
-group_histogram(alldata, balance, group_var = loan)
-group_histogram(alldata, balance, duration, group_var = loan)
+# group_histogram(alldata, balance, group_var = loan)
+# group_histogram(alldata, balance, duration, group_var = loan)
 
 #create scatter plot output
 boxplot <- function(data, x, y, fill = NULL) {
@@ -166,10 +166,10 @@ boxplot <- function(data, x, y, fill = NULL) {
 }
 
 #test the function
-boxplot(alldata, age, job, education)
+# boxplot(alldata, age, job, education)
 
 #scatter plot static function
-scatter_plot <- function(data, x, y, group_var) {
+ scatter_plot <- function(data, x, y, group_var) {
   p <- ggplot(data, aes_string(x = deparse(substitute(x)), y = deparse(substitute(y)), color = deparse(substitute(group_var)), shape = deparse(substitute(group_var)))) +
         geom_point(size = 3, alpha = 0.8) +
         labs(
@@ -185,7 +185,7 @@ scatter_plot <- function(data, x, y, group_var) {
 }
 
 #test function
-scatter_plot(alldata, age, balance, default)
+# scatter_plot(alldata, age, balance, default)
 
 # violin plotting function
 violin_plot <- function(data, x, y, group_var = NULL, facet_var = NULL) {
@@ -228,4 +228,4 @@ violin_plot <- function(data, x, y, group_var = NULL, facet_var = NULL) {
 }
 
 #test the function
-violin_plot(alldata, marital, balance, job, default)
+# violin_plot(alldata, marital, balance, job, default)

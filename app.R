@@ -4,6 +4,7 @@ library(tidyverse)
 library(bslib) 
 
 source("helpers.R")
+source("static.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -272,25 +273,59 @@ server <- function(input, output, session) {
     req(input$summary_type)
     
     if (input$summary_type == "cat") {
-      # Categorical Summaries
+      # Categorical Summaries Layout with Select Input
       tagList(
         h4("Categorical Summaries"),
-        p(""),
+        p("Select a qualitative factor to observe sample distributions."),
         hr(),
         fluidRow(
+          column(width = 4,
+                 selectInput(
+                   inputId = "selected_cat_var",
+                   label = "Choose Categorical Variable:",
+                   choices = c("Marital Status" = "marital", "Educational Attainment" = "education"),
+                   selected = "marital"
+                 )
+          ),
+          column(width = 8, 
+                 h5("Frequency Breakdown Table"),
+                 tableOutput("categorical_summary_table")
+          )
         )
       )
     } else if (input$summary_type == "num") {
-      # Numeric Summaries
+      # Numeric Summaries Layout
       tagList(
         h4("Numeric Summaries"),
-        p(""),
+        p("Aggregated stats for continuous fields based on selected slices."),
         hr(),
         fluidRow(
+          column(width = 12, tableOutput("numeric_summary_table"))
         )
       )
     }
   })
+  
+  # 3. Dynamic output using your one_way_table function
+  output$categorical_summary_table <- renderTable({
+    req(filtered_data(), input$selected_cat_var)
+    df <- filtered_data()
+    
+    # Safely evaluate variable choice matching your active filter chain
+    req(input$selected_cat_var %in% names(df))
+    
+    # Call your function using the requested column array vector
+    one_way_table(df[[input$selected_cat_var]])
+  })
+  
+  # Numeric summary statistics placeholder framework
+  output$numeric_summary_table <- renderTable({
+    req(filtered_data(), input$x)
+    df <- filtered_data()
+    summary_stats <- summary(df[[input$x]])
+    data.frame(Statistic = names(summary_stats), Value = as.numeric(summary_stats))
+  })
+
   
   # Summary outputs
 
