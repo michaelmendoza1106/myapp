@@ -62,18 +62,6 @@ two_way_table <- function(var1, var2){
 #Numerical Summaries 
 # Function to calculate grouped summaries
 summaries <- function(data, group_var, num_var) {
-  if (deparse(substitute(group_var)) == "all"){
-    df <- data %>%
-      summarise(
-        Count  = n(),
-        Mean   = mean({{ num_var }}, na.rm = TRUE),
-        Median = median({{ num_var }}, na.rm = TRUE),
-        SD     = sd({{ num_var }}, na.rm = TRUE),
-        Min    = min({{ num_var }}, na.rm = TRUE),
-        Max    = max({{ num_var }}, na.rm = TRUE),
-        .groups = "drop"
-      )
-  } else {
   df <- data %>%
     group_by({{ group_var }}) %>%
     summarise(
@@ -85,7 +73,7 @@ summaries <- function(data, group_var, num_var) {
       Max    = max({{ num_var }}, na.rm = TRUE),
       .groups = "drop"
     )
-  }
+
  return(df)
 }
 
@@ -95,19 +83,19 @@ summaries <- function(data, group_var, num_var) {
 
 # bar static function
 # Define the function
-barplot <- function(data, x, group_var) {
+barplot <- function(data, x, group_var, x_label, fill_label) {
   ggplot(data, aes(x = {{ x }}, fill = {{ group_var }})) +
     geom_bar(position = "dodge") + 
     theme_minimal() +
     labs(
-      x = deparse(substitute(x)),
+      x = x_label,
       y = "Count",
-      fill = deparse(substitute(group_var))
+      fill = x_label
     )
 }
 
 #test fucntion
-#barplot(alldata, job, loan)
+#barplot(alldata, job, loan, "Personal Loan Status", "loan")
 
 # side by side static function
 # Define the function

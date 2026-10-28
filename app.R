@@ -297,7 +297,14 @@ server <- function(input, output, session) {
           ),
           column(width = 8, 
                  h5("Distribution Result Frame"),
-                 tableOutput("categorical_summary_table")
+                 tableOutput("categorical_summary_table"),
+                 #Conditional output of Bar graph for two way.
+                 br(),
+                 conditionalPanel(
+                   condition = "input.cat_mode == 'two_way'",
+                   h5("Side-by-Side Visual Breakdown"),
+                   plotOutput("categorical_bar_plot")
+                 )
           )
         )
       )
@@ -350,6 +357,23 @@ server <- function(input, output, session) {
       two_way_table(df[[input$selected_cat_var1]], df[[input$selected_cat_var2]])
     }
   })
+  
+  #Two way Bar plot
+  output$categorical_bar_plot <- renderPlot({
+    req(filtered_data(), input$cat_mode == "two_way", input$selected_cat_var1, input$selected_cat_var2)
+    df <- filtered_data()
+    
+    req(input$selected_cat_var1 %in% names(df), input$selected_cat_var2 %in% names(df))
+    
+    barplot(
+      data = df,
+      x = .data[[input$selected_cat_var1]],
+      group_var = .data[[input$selected_cat_var2]],    
+      x_label = input$selected_cat_var1,
+      fill_label = input$selected_cat_var2
+    )
+  })
+  
   
   # Numeric summary statistics
   output$numeric_summary_table <- renderTable({
