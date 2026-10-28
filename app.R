@@ -57,12 +57,62 @@ ui <- fluidPage(
     
     # main Panel
     mainPanel(
-      h3("Reactive Outputs"),
-      textOutput("selected_range"),
-      textOutput("min_age"),
-      textOutput("max_age"),
       
-      plotOutput("corr_scatterplot")
+      tabsetPanel(
+        type = "tabs",
+        
+        # About Section
+        tabPanel(
+          title = "About This App",
+          br(),
+          h3("Application Purpose & Metadata"),
+          p("This application provides an interactive platform to explore banking datasets. 
+            Users can dynamically subset data fields, filter across multi-variate continuous boundaries, 
+            and isolate key categorical factors such as marital status and education attainment.
+            data was taken from the following URL link. both the test and train csv files were called, and 
+            merged together in order to create the output. Link: https://www.kaggle.com/datasets/prakharrathi25/banking-dataset-marketing-targets"),
+          
+          br(),
+          h4("App Information Overview"),
+          # HTML styled table for scannable layout
+          tags$table(
+            class = "table table-striped table-bordered",
+            style = "max-width: 600px;",
+            tags$thead(
+              tags$tr(
+                tags$th("Side Bar function"),
+                tags$th("Description")
+              )
+            ),
+            tags$tbody(
+              tags$tr(
+                tags$td(strong("x Variable")),
+                tags$td("Numeric variable to place on X axis. Slider Provides filtering for dataset")
+              ),
+              tags$tr(
+                tags$td(strong("y Variable")),
+                tags$td("Numeric Variable to set on Y axis. Slider Provides filtering for dataset")
+              ),
+              tags$tr(
+                tags$td(strong("Marital Status")),
+                tags$td("Subset data by population's marital status.")
+              ),
+              tags$tr(
+                tags$td(strong("Educational Attainment")),
+                tags$td("Subset data by population highest reported level of education.")
+              )
+            )
+          ),
+          
+          br(),
+          h4("Visual Overview"),
+          img(
+            src = "banking_overview.png", 
+            alt = "Application workflow or placeholder graphic", 
+            style = "max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;"
+          )
+        )
+      )
     )
   )
 )
@@ -149,14 +199,6 @@ server <- function(input, output, session) {
   output$min_age <- renderText({ paste("Min Age:", input$age_range[1]) })
   output$max_age <- renderText({ paste("Max Age:", input$age_range[2]) })
   
-  # Example scatterplot execution using the submitted filters
-  output$corr_scatterplot <- renderPlot({
-    req(input$x, input$y)
-    ggplot(filtered_data(), aes_string(x = input$x, y = input$y)) +
-      geom_point(alpha = 0.5, color = "steelblue") +
-      theme_minimal() +
-      labs(title = paste("Scatterplot of", input$x, "vs", input$y))
-  })
 }
 
 # Run the application 
