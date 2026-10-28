@@ -132,15 +132,14 @@ boxplot <- function(data, x, y, fill ) {
 # boxplot(alldata, age, job, education)
 
 #scatter plot static function
- scatter_plot <- function(data, x, y, group_var) {
-  p <- ggplot(data, aes_string(x = deparse(substitute(x)), y = deparse(substitute(y)), color = deparse(substitute(group_var)), shape = deparse(substitute(group_var)))) +
-        geom_point(size = 3, alpha = 0.8) +
+ scatter_plot <- function(data, x, y, group_var, x_label, y_label, group_label) {
+  p <- ggplot(data, aes(x = {{ x }}, y = {{ y }}, color = {{ group_var }}, shape = {{ group_var }} )) +
+        geom_point(size = 3, alpha = 0.6) +
         labs(
-          x = deparse(substitute(x)),
-          y = deparse(substitute(y)),
-          color = deparse(substitute(group_var)),
-          shape = deparse(substitute(group_var)),
-          title = paste("Scatter Plot of", deparse(substitute(y)), "vs", deparse(substitute(x)), "by", deparse(substitute(group_var)))
+          x = x_label,
+          y = y_label,
+          color = group_label,
+          shape = group_label
         ) +
         theme_minimal()
   
@@ -148,7 +147,7 @@ boxplot <- function(data, x, y, fill ) {
 }
 
 #test function
-# scatter_plot(alldata, age, balance, default)
+# scatter_plot(alldata, age, balance, default, "Age", "Balance", "Default Status")
 
 # violin plotting function
 violin_plot <- function(data, x, y, group_var = NULL, facet_var = NULL) {
@@ -191,4 +190,4 @@ violin_plot <- function(data, x, y, group_var = NULL, facet_var = NULL) {
 }
 
 #test the function
-# violin_plot(alldata, marital, balance, job, default)
+ violin_plot(alldata, marital, balance, job, job)
