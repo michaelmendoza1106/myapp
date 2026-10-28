@@ -62,7 +62,19 @@ two_way_table <- function(var1, var2){
 #Numerical Summaries 
 # Function to calculate grouped summaries
 summaries <- function(data, group_var, num_var) {
- df <- data %>%
+  if (deparse(substitute(group_var)) == "all"){
+    df <- data %>%
+      summarise(
+        Count  = n(),
+        Mean   = mean({{ num_var }}, na.rm = TRUE),
+        Median = median({{ num_var }}, na.rm = TRUE),
+        SD     = sd({{ num_var }}, na.rm = TRUE),
+        Min    = min({{ num_var }}, na.rm = TRUE),
+        Max    = max({{ num_var }}, na.rm = TRUE),
+        .groups = "drop"
+      )
+  } else {
+  df <- data %>%
     group_by({{ group_var }}) %>%
     summarise(
       Count  = n(),
@@ -73,12 +85,12 @@ summaries <- function(data, group_var, num_var) {
       Max    = max({{ num_var }}, na.rm = TRUE),
       .groups = "drop"
     )
- 
+  }
  return(df)
 }
 
 #test Summary Function
-#test_summary <- summaries(alldata, marital, age)
+#test_summary <- summaries(alldata, all, age)
 #test_summary
 
 # bar static function

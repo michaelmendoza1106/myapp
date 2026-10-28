@@ -155,15 +155,6 @@ ui <- fluidPage(
             )
           )
         )
-        
-        
-        
-        
-        
-        
-        
-        
-        
       )
     )
   )
@@ -276,59 +267,105 @@ server <- function(input, output, session) {
       # Categorical Summaries Layout with Select Input
       tagList(
         h4("Categorical Summaries"),
-        p("Select a qualitative factor to observe sample distributions."),
+        p("Configuration:"),
         hr(),
         fluidRow(
           column(width = 4,
+                 radioButtons(
+                   inputId = "cat_mode",
+                   label = "Table Type:",
+                   choices = c("One-Way Frequency" = "one_way", "Two-Way Cross Tab" = "two_way"),
+                   selected = "one_way"
+                 ),
+                 br(),
                  selectInput(
-                   inputId = "selected_cat_var",
-                   label = "Choose Categorical Variable:",
-                   choices = c("Marital Status" = "marital", "Educational Attainment" = "education"),
+                   inputId = "selected_cat_var1",
+                   label = "Primary Variable (Rows):",
+                   choices = cat_vars,
                    selected = "marital"
+                 ),
+                 # Render the secondary selection input field only if Two-Way is selected
+                 conditionalPanel(
+                   condition = "input.cat_mode == 'two_way'",
+                   selectInput(
+                     inputId = "selected_cat_var2",
+                     label = "Secondary Variable (Columns):",
+                     choices = cat_vars,
+                     selected = "education"
+                   )
                  )
           ),
           column(width = 8, 
-                 h5("Frequency Breakdown Table"),
+                 h5("Distribution Result Frame"),
                  tableOutput("categorical_summary_table")
           )
         )
       )
     } else if (input$summary_type == "num") {
-      # Numeric Summaries Layout
       tagList(
         h4("Numeric Summaries"),
-        p("Aggregated stats for continuous fields based on selected slices."),
+        p("Generate grouped continuous statistics for selected data."),
         hr(),
         fluidRow(
-          column(width = 12, tableOutput("numeric_summary_table"))
+          column(width = 4,
+                 selectInput(
+                   inputId = "num_group_var",
+                   label = "Grouping Variable (Categorical):",
+                   choices = cat_vars,
+                   selected = "marital"
+                 ),
+                 selectInput(
+                   inputId = "num_target_var",
+                   label = "Target Metric (Numeric):",
+                   choices = numeric_vars,
+                   selected = "balance"
+                 )
+          ),
+          column(width = 8, 
+                 h5("Grouped Descriptive Statistics"),
+                 tableOutput("numeric_summary_table")
+          )
         )
       )
     }
   })
   
-  # 3. Dynamic output using your one_way_table function
+  # Data Output
+  # Categorical outputs
   output$categorical_summary_table <- renderTable({
-    req(filtered_data(), input$selected_cat_var)
+    req(filtered_data(), input$cat_mode, input$selected_cat_var1)
     df <- filtered_data()
     
-    # Safely evaluate variable choice matching your active filter chain
-    req(input$selected_cat_var %in% names(df))
+    # Validation safety checks
+    req(input$selected_cat_var1 %in% names(df))
     
-    # Call your function using the requested column array vector
-    one_way_table(df[[input$selected_cat_var]])
+    if (input$cat_mode == "one_way") {
+      # Execute single-variable layout
+      one_way_table(df[[input$selected_cat_var1]])
+      
+    } else if (input$cat_mode == "two_way") {
+      req(input$selected_cat_var2, input$selected_cat_var2 %in% names(df))
+      
+      # Execute your two_way_table function
+      two_way_table(df[[input$selected_cat_var1]], df[[input$selected_cat_var2]])
+    }
   })
   
-  # Numeric summary statistics placeholder framework
+  # Numeric summary statistics
   output$numeric_summary_table <- renderTable({
-    req(filtered_data(), input$x)
+    req(filtered_data(), input$num_group_var, input$num_target_var)
     df <- filtered_data()
-    summary_stats <- summary(df[[input$x]])
-    data.frame(Statistic = names(summary_stats), Value = as.numeric(summary_stats))
+    
+    # Structural check to ensure choices map correctly into the data frame columns
+    req(input$num_group_var %in% names(df), input$num_target_var %in% names(df))
+    
+    # Bridge tidy evaluation by transforming string choices using .data pronouns
+    summaries(
+      data = df, 
+      group_var = .data[[input$num_group_var]], 
+      num_var = .data[[input$num_target_var]]
+    )
   })
-
-  
-  # Summary outputs
-
 }
 
 # Run the application 
