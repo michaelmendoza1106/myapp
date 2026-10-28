@@ -111,7 +111,7 @@ side_by_side <- function(data, x, y, group_var) {
 }
 
 #test function
-# side_by_side(alldata, job, balance, loan)
+#side_by_side(alldata, job, balance, loan)
 
 #histogram function
 group_histogram <- function(data, x, y = NULL, group_var) {
