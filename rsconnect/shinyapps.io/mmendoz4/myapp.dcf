@@ -1,0 +1,10 @@
+name: myapp
+title:
+username: mmendoz4
+account: mmendoz4
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 18308868
+bundleId: 12752668
+url: https://mmendoz4.shinyapps.io/myapp/
+version: 1
