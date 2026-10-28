@@ -143,7 +143,7 @@ ui <- fluidPage(
               radioButtons(
                 inputId = "summary_type",
                 label = "Choose Summary Dimension:",
-                choices = c("Categorical Summaries" = "cat", "Numeric Summaries" = "num"),
+                choices = c("Categorical Summaries" = "cat", "Grouped Numeric Summaries" = "grp", "Numeric Summaries" = "num"),
                 selected = "cat"
               )
             ),
@@ -263,8 +263,7 @@ server <- function(input, output, session) {
   output$exploration_framework_ui <- renderUI({
     req(input$summary_type)
     
-    if (input$summary_type == "cat") {
-      # Categorical Summaries Layout with Select Input
+    if (input$summary_type == "cat") { # Categorical Summaries
       tagList(
         h4("Categorical Summaries"),
         p("Configuration:"),
@@ -284,7 +283,7 @@ server <- function(input, output, session) {
                    choices = cat_vars,
                    selected = "marital"
                  ),
-                 # Render the secondary selection input field only if Two-Way is selected
+                 # conditional secondary input option
                  conditionalPanel(
                    condition = "input.cat_mode == 'two_way'",
                    selectInput(
@@ -301,16 +300,21 @@ server <- function(input, output, session) {
                  #Conditional output of Bar graph for two way.
                  br(),
                  conditionalPanel(
+                   condition = "input.cat_mode == 'one_way'",
+                   h5("Bar Graph Visual Breakdown"),
+                   plotOutput("categorical_bar_plot1")
+                 ),
+                 conditionalPanel(
                    condition = "input.cat_mode == 'two_way'",
-                   h5("Side-by-Side Visual Breakdown"),
-                   plotOutput("categorical_bar_plot")
+                   h5("Bar Graph Visual Breakdown"),
+                   plotOutput("categorical_bar_plot2")
                  )
           )
         )
       )
-    } else if (input$summary_type == "num") {
+    } else if (input$summary_type == "grp") { # 1 Numeric Var Outputs
       tagList(
-        h4("Numeric Summaries"),
+        h4("Grouped Numeric Summaries"),
         p("Generate grouped continuous statistics for selected data."),
         hr(),
         fluidRow(
@@ -322,15 +326,61 @@ server <- function(input, output, session) {
                    selected = "marital"
                  ),
                  selectInput(
-                   inputId = "num_target_var",
-                   label = "Target Metric (Numeric):",
+                   inputId = "num_target_var1",
+                   label = "Metric 1 (Numeric):",
                    choices = numeric_vars,
                    selected = "balance"
-                 )
+                 ),
+                 selectInput(
+                   inputId = "num_fill_var",
+                   label = "Secondary Grouping Variable (Fill Color):",
+                   choices = cat_vars,
+                   selected = "marital"
+                 ),
           ),
           column(width = 8, 
                  h5("Grouped Descriptive Statistics"),
-                 tableOutput("numeric_summary_table")
+                 tableOutput("numeric_summary_table"),
+                 # Numeric Side by Side Chart
+                 br(),
+                 h5("Side-by-Side Numeric Column Chart"),
+                 plotOutput("numeric_side_by_side_plot")
+          )
+        )
+      )
+    } else if (input$summary_type == "num") { # 2 Numeric Var Outputs
+      tagList(
+        h4("Numeric Summaries"),
+        p("Generate numeric statistic visuals for selected data."),
+        hr(),
+        fluidRow(
+          column(width = 4,
+                 selectInput(
+                   inputId = "num_target_var1",
+                   label = "Metric 1 (Numeric):",
+                   choices = numeric_vars,
+                   selected = "age"
+                 ),
+                 selectInput(
+                   inputId = "num_target_var2",
+                   label = "Metric 2 (Numeric):",
+                   choices = numeric_vars,
+                   selected = "balance"
+                 ),
+                 selectInput(
+                   inputId = "num_fill_var",
+                   label = "Secondary Grouping Variable (Fill Color):",
+                   choices = cat_vars,
+                   selected = "marital"
+                 ),
+          ),
+          column(width = 8, 
+                 h5("Grouped Descriptive Statistics"),
+                 tableOutput("numeric_summary_table"),
+                 # Numeric Side by Side Chart
+                 br(),
+                 h5("Side-by-Side Numeric Column Chart"),
+                 plotOutput("numeric_side_by_side_plot")
           )
         )
       )
@@ -358,8 +408,23 @@ server <- function(input, output, session) {
     }
   })
   
+  #One way Bar plot
+  output$categorical_bar_plot1 <- renderPlot({
+    req(filtered_data(), input$cat_mode == "one_way", input$selected_cat_var1)
+    df <- filtered_data()
+    
+    req(input$selected_cat_var1 %in% names(df))
+    
+    barplot(
+      data = df,
+      x = .data[[input$selected_cat_var1]],
+      group_var = .data[[input$selected_cat_var1]],    
+      x_label = input$selected_cat_var1,
+      fill_label = input$selected_cat_var1
+    )
+  })
   #Two way Bar plot
-  output$categorical_bar_plot <- renderPlot({
+  output$categorical_bar_plot2 <- renderPlot({
     req(filtered_data(), input$cat_mode == "two_way", input$selected_cat_var1, input$selected_cat_var2)
     df <- filtered_data()
     
@@ -377,19 +442,40 @@ server <- function(input, output, session) {
   
   # Numeric summary statistics
   output$numeric_summary_table <- renderTable({
-    req(filtered_data(), input$num_group_var, input$num_target_var)
+    req(filtered_data(), input$num_group_var, input$num_target_var1)
     df <- filtered_data()
     
-    # Structural check to ensure choices map correctly into the data frame columns
-    req(input$num_group_var %in% names(df), input$num_target_var %in% names(df))
+    req(input$num_group_var %in% names(df), input$num_target_var1 %in% names(df))
     
-    # Bridge tidy evaluation by transforming string choices using .data pronouns
     summaries(
       data = df, 
       group_var = .data[[input$num_group_var]], 
-      num_var = .data[[input$num_target_var]]
+      num_var = .data[[input$num_target_var1]]
     )
   })
+    
+  # Numeric side-by-side
+    output$numeric_side_by_side_plot <- renderPlot({
+      req(filtered_data(), input$num_group_var, input$num_fill_var, input$num_target_var1)
+      df <- filtered_data()
+      
+      # Validation safety check
+      req(
+        input$num_group_var %in% names(df), 
+        input$num_fill_var %in% names(df), 
+        input$num_target_var1 %in% names(df)
+      )
+
+      side_by_side(
+        data = df,
+        x = .data[[input$num_group_var]],
+        y = .data[[input$num_target_var1]],
+        group_var = .data[[input$num_fill_var]],
+        x_label = input$num_group_var,
+        y_label = input$num_target_var1,
+        group_label = input$num_fill_var
+      )
+    })
 }
 
 # Run the application 

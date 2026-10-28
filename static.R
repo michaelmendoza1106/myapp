@@ -99,14 +99,14 @@ barplot <- function(data, x, group_var, x_label, fill_label) {
 
 # side by side static function
 # Define the function
-side_by_side <- function(data, x, y, group_var) {
+side_by_side <- function(data, x, y, group_var, x_label, y_label, group_label) {
   ggplot(data, aes(x = {{ x }}, y = {{ y }}, fill = {{ group_var }})) +
     geom_col(position = "dodge") + 
     theme_minimal() +
     labs(
-      x = deparse(substitute(x)),
-      y = deparse(substitute(y)),
-      fill = deparse(substitute(group_var))
+      x = x_label,
+      y = y_label,
+      fill = group_label
     )
 }
 
@@ -114,31 +114,19 @@ side_by_side <- function(data, x, y, group_var) {
 #side_by_side(alldata, job, balance, loan)
 
 #histogram function
-group_histogram <- function(data, x, y = NULL, group_var) {
+group_histogram <- function(data, x, group_var) {
   
   # Base plot mapping the X variable and the fill/grouping variable
-  p <- ggplot(data, aes(x = {{ x }}, fill = factor({{ group_var }})))
-  
-  # Check if a custom Y variable/weight is provided
-  if (is.null(substitute(y))) {
-    # Standard frequency count histogram
-    p <- p + geom_histogram(position = "identity", alpha = 0.6, color = "white")
-  } else {
-    # If a Y variable is explicitly given, map it to the y aesthetic or as a weight
-    p <- p + geom_histogram(aes(y = {{ y }}), stat = "identity", position = "dodge")
-  }
-  
-  # Clean up formatting and labels
-  p <- p + 
-    theme_minimal() +
-    labs(fill = "Group")
+  p <- ggplot(data, aes(x = {{ x }}, fill = factor({{ group_var }}))) + 
+    geom_histogram(position = "identity", alpha = 0.6, color = "white") + 
+      theme_minimal() +
+    labs(fill = "Group" )
   
   return(p)
 }
 
 # Test Histogram
-# group_histogram(alldata, balance, group_var = loan)
-# group_histogram(alldata, balance, duration, group_var = loan)
+group_histogram(alldata, balance, group_var = loan)
 
 #create scatter plot output
 boxplot <- function(data, x, y, fill = NULL) {
