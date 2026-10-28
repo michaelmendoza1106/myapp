@@ -381,7 +381,10 @@ server <- function(input, output, session) {
                  #Scatter plot
                  h5("Scatter Plot of Selected Variables"),
                  plotOutput("numeric_scatter_plot"),
-                 br()
+                 br(),
+                 #Violin plot
+                 h5("Violin Plot of Selected Variables"),
+                 plotOutput("numeric_violin_plot"),
           )
         )
       )
@@ -591,6 +594,37 @@ server <- function(input, output, session) {
       })
     })
     
+    #violin plot 
+    output$numeric_violin_plot <- renderPlot({
+      req(filtered_data(), input$num_target_var2, input$num_fill_var, input$num_target_var1)
+      df <- filtered_data()
+      
+      # Validation safety check
+      req(
+        input$num_target_var2 %in% names(df), 
+        input$num_fill_var %in% names(df), 
+        input$num_target_var1 %in% names(df)
+      )
+      
+      #add loading delay
+      withProgress(message = 'Rendering visual distributions...', value = 0.5, {
+        
+        # Inject the 1-second structural execution delay
+        Sys.sleep(1)
+        
+        # Complete progress block right before drawing
+        setProgress(value = 1, message = "Plot complete!")
+        
+        violin_plot(
+          data = df, 
+          y = .data[[input$num_target_var2]],
+          x = .data[[input$num_target_var1]],
+          facet_var = .data[[input$num_fill_var]],
+          y_label = input$num_target_var2,
+          x_label = input$num_target_var1
+        )
+      })
+    })
     
 }
 
