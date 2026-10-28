@@ -100,6 +100,10 @@ ui <- fluidPage(
               tags$tr(
                 tags$td(strong("Educational Attainment")),
                 tags$td("Subset data by population highest reported level of education.")
+              ),
+              tags$tr(
+                tags$td(strong("Select Age Range")),
+                tags$td("Optional subsetting to select specific age range of subjects.")
               )
             )
           ),
@@ -110,8 +114,55 @@ ui <- fluidPage(
             src = "banking_overview.png", 
             alt = "Application workflow or placeholder graphic", 
             style = "max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;"
+          ),
+        ),
+        # Data Download Tab
+        tabPanel(
+          title = "Data Download",
+          br(),
+          h3("Export Filtered Dataset"),
+          p("Click the button below to download the data matching your current filter selections as a CSV file."),
+          br(),
+          # Add the download button widget
+          downloadButton(outputId = "download_csv", label = "Download Filtered Data (.csv)"),
+          br(), br(),
+          h4("Preview of Data (First N.obs = 50)"),
+          tableOutput("preview_download_table")
+        ),
+        #  Data Exploration Table
+        tabPanel(
+          title = "Create Data Output",
+          br(),
+          h3("Variable Configurations"),
+          
+          # Layout split: Left side for toggle choices, right side for switching frames
+          sidebarLayout(
+            sidebarPanel(
+              width = 3,
+              radioButtons(
+                inputId = "summary_type",
+                label = "Choose Summary Dimension:",
+                choices = c("Categorical Summaries" = "cat", "Numeric Summaries" = "num"),
+                selected = "cat"
+              )
+            ),
+            
+            mainPanel(
+              width = 9,
+              # This placeholder will load different layout wires dynamically
+              uiOutput("exploration_framework_ui")
+            )
           )
         )
+        
+        
+        
+        
+        
+        
+        
+        
+        
       )
     )
   )
@@ -199,6 +250,50 @@ server <- function(input, output, session) {
   output$min_age <- renderText({ paste("Min Age:", input$age_range[1]) })
   output$max_age <- renderText({ paste("Max Age:", input$age_range[2]) })
   
+  #Download tab handler
+  output$download_csv <- downloadHandler(
+    filename = function() {
+      # Creates a filename like: filtered_bank_data_2026-10-27.csv
+      paste("filtered_bank_data_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      # Writes the reactive data to the download file path
+      write.csv(filtered_data(), file, row.names = FALSE)
+    }
+  )
+  
+  # Preview table
+  output$preview_download_table <- renderTable({
+    head(filtered_data(), 50)
+  })
+  
+  #Data Summary tab
+  output$exploration_framework_ui <- renderUI({
+    req(input$summary_type)
+    
+    if (input$summary_type == "cat") {
+      # Categorical Summaries
+      tagList(
+        h4("Categorical Summaries"),
+        p(""),
+        hr(),
+        fluidRow(
+        )
+      )
+    } else if (input$summary_type == "num") {
+      # Numeric Summaries
+      tagList(
+        h4("Numeric Summaries"),
+        p(""),
+        hr(),
+        fluidRow(
+        )
+      )
+    }
+  })
+  
+  # Summary outputs
+
 }
 
 # Run the application 
